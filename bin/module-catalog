@@ -1,0 +1,232 @@
+#!/usr/bin/env node
+/**
+ * module-catalog — scan a Shopify theme and build CATALOG.html (searchable
+ * catalog of sections, blocks, snippets, JS, SCSS, settings grouped by need).
+ *
+ *   module-catalog                 # theme = current folder (or a parent of it)
+ *   module-catalog <path>          # theme at <path>
+ *   module-catalog --no-open       # don't open the browser
+ *   module-catalog --out <file>    # write somewhere else (default <theme>/CATALOG.html)
+ *   module-catalog --no-diff       # skip comparing with the previous CATALOG.html
+ */
+
+const fs = require("fs");
+const path = require("path");
+const { execFile } = require("child_process");
+const { scan, categoryOf, UNCATEGORIZED } = require("../lib/scan");
+const { renderHtml } = require("../lib/render");
+const { readPrevious, diffCatalog, gitHead } = require("../lib/diff");
+const { protectedGroups } = require("../lib/protected");
+const pkg = require("../package.json");
+
+// Scope: the tool only runs on themes inside the folder that holds it
+// (…/FoxEcom/module-catalog → …/FoxEcom). realpath so the ~/.local/bin symlink resolves.
+const SCOPE = path.resolve(path.dirname(fs.realpathSync(__filename)), "..", "..");
+
+const tty = process.stdout.isTTY;
+const c = (code) => (s) => (tty ? `\x1b[${code}m${s}\x1b[0m` : s);
+const green = c(32);
+const dim = c(2);
+const yellow = c(33);
+const red = c(31);
+const cyan = c(36);
+const bold = c(1);
+
+const HELP = `
+${bold("module-catalog")} ${dim("v" + pkg.version)} — catalog các module của Shopify theme
+
+${bold("Cách dùng")}
+  module-catalog [path] [options]
+
+${bold("Options")}
+  --no-open        Không tự mở trình duyệt
+  --out <file>     File output (mặc định: <theme>/CATALOG.html)
+  --no-diff        Không so sánh với CATALOG.html của lần chạy trước
+  -h, --help       Hướng dẫn
+  -v, --version    Phiên bản
+
+${bold("Phạm vi")}
+  Chỉ chạy với theme nằm trong ${SCOPE}
+  Chạy ngay tại ${path.basename(SCOPE)}/ → sinh catalog cho mọi theme bên trong (không mở trình duyệt)
+
+${bold("So sánh")}
+  Nếu file output đã có từ lần chạy trước, tool đọc lại nó và báo mục mới / sửa /
+  đổi tên / xoá cùng thay đổi global settings (cả ở terminal lẫn trong trang).
+
+${bold("Ví dụ")}
+  cd ${path.join(SCOPE, "foxtheme-base")} && module-catalog
+  module-catalog ${path.join(SCOPE, "foxtheme-base")} --no-open
+`;
+
+function inScope(dir) {
+  const rel = path.relative(SCOPE, fs.realpathSync(dir));
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
+// Direct child folders of SCOPE that are Shopify themes.
+function themesInScope() {
+  return fs
+    .readdirSync(SCOPE, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(SCOPE, e.name, "config", "settings_schema.json")))
+    .map((e) => path.join(SCOPE, e.name));
+}
+
+function parseArgs(argv) {
+  const opts = { path: process.cwd(), open: true, out: null, diff: true };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "-h" || a === "--help") opts.help = true;
+    else if (a === "-v" || a === "--version") opts.version = true;
+    else if (a === "--no-open") opts.open = false;
+    else if (a === "--no-diff") opts.diff = false;
+    else if (a === "--out") opts.out = argv[++i];
+    else if (a.startsWith("-")) throw new Error(`Option không hợp lệ: ${a}`);
+    else opts.path = a;
+  }
+  return opts;
+}
+
+// Walk up from `start` to the folder holding config/settings_schema.json.
+function findThemeRoot(start) {
+  let dir = path.resolve(start);
+  while (true) {
+    if (fs.existsSync(path.join(dir, "config", "settings_schema.json"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+// Keep the generated page out of git — local exclude, never committed.
+function excludeFromGit(root, outFile) {
+  const gitDir = path.join(root, ".git");
+  if (!fs.existsSync(gitDir) || !fs.statSync(gitDir).isDirectory()) return false;
+  const rel = path.relative(root, outFile);
+  if (rel.startsWith("..")) return false;
+  const exclude = path.join(gitDir, "info", "exclude");
+  const current = fs.existsSync(exclude) ? fs.readFileSync(exclude, "utf8") : "";
+  if (current.split("\n").some((l) => l.trim() === rel || l.trim() === `/${rel}`)) return false;
+  fs.mkdirSync(path.dirname(exclude), { recursive: true });
+  fs.appendFileSync(exclude, `${current.endsWith("\n") || !current ? "" : "\n"}# module-catalog output\n${rel}\n`);
+  return true;
+}
+
+function openInBrowser(file) {
+  const [cmd, args] =
+    process.platform === "darwin"
+      ? ["open", [file]]
+      : process.platform === "win32"
+        ? ["cmd", ["/c", "start", "", file]]
+        : ["xdg-open", [file]];
+  execFile(cmd, args, () => {});
+}
+
+function main() {
+  const opts = parseArgs(process.argv.slice(2));
+  if (opts.help) return console.log(HELP);
+  if (opts.version) return console.log(pkg.version);
+
+  const target = path.resolve(opts.path);
+  if (!fs.existsSync(target)) throw new Error(`Không tồn tại: ${target}`);
+  if (!inScope(target)) {
+    console.error(red(`✗ Ngoài phạm vi — module-catalog chỉ chạy trong ${SCOPE}`) + dim(`\n  (đang ở ${target})`));
+    process.exit(1);
+  }
+
+  // At the scope root itself: catalog every theme inside, without opening tabs.
+  if (fs.realpathSync(target) === SCOPE) {
+    const themes = themesInScope();
+    if (!themes.length) throw new Error(`Không có theme nào trong ${SCOPE}`);
+    if (opts.out) throw new Error("--out chỉ dùng khi chạy cho 1 theme");
+    themes.forEach((root) => build(root, { ...opts, open: false }));
+    return;
+  }
+
+  const root = findThemeRoot(target);
+  if (!root || !inScope(root)) {
+    console.error(red("✗ Không tìm thấy Shopify theme") + dim(` (cần config/settings_schema.json) từ ${target}`));
+    process.exit(1);
+  }
+  build(root, opts);
+}
+
+function build(root, opts) {
+  const started = Date.now();
+  const { items, settings } = scan(root);
+  const outFile = path.resolve(opts.out || path.join(root, "CATALOG.html"));
+  // Read the previous page BEFORE overwriting it — it is the baseline.
+  const groups = protectedGroups(root);
+  const diff = opts.diff ? diffCatalog(readPrevious(outFile), items, settings, groups) : null;
+  const git = gitHead(root);
+  fs.writeFileSync(outFile, renderHtml(root, items, settings, { diff, git, protectedGroups: groups }), "utf8");
+  const excluded = excludeFromGit(root, outFile);
+
+  const count = (k) => items.filter((i) => i.kind === k).length;
+  const unmatched = items.filter((i) => categoryOf(i) === UNCATEGORIZED.id).length;
+  console.log(`${green("✓")} ${bold("Catalog")} ${dim(path.basename(root))}  ${items.length} mục ${dim(`· ${Date.now() - started}ms`)}`);
+  console.log(
+    dim(
+      `  ${count("section")} section · ${count("block")} block · ${count("private")} private · ` +
+        `${count("snippet")} snippet · ${count("js")} js · ${count("scss")} scss · ${settings.length} settings`
+    )
+  );
+  const coreFiles = groups.reduce((n, g) => n + g.files.length, 0);
+  if (coreFiles) {
+    const locked = groups.filter((g) => g.level === "locked").reduce((n, g) => n + g.files.length, 0);
+    console.log(dim(`  🔒 ${coreFiles} file core không được sửa (${locked} locked · ${coreFiles - locked} sync từ core)`));
+  }
+  printDiff(diff);
+  if (unmatched) console.log(yellow(`  ⚠ ${unmatched} mục chưa phân loại — thêm rule trong lib/categories.js`));
+  if (excluded) console.log(dim(`  + đã thêm ${path.relative(root, outFile)} vào .git/info/exclude`));
+  console.log(`  ${dim("→")} file://${outFile}`);
+  if (opts.open) openInBrowser(outFile);
+}
+
+const LIST_LIMIT = 8;
+
+function printDiff(diff) {
+  if (!diff) return;
+  const p = diff.prev;
+  const since = [p.generated, p.git?.sha && `${p.git.branch || "detached"}@${p.git.sha}`].filter(Boolean).join(" · ");
+  if (!diff.total) return console.log(dim(`  = Không thay đổi so với lần chạy trước (${since})`));
+
+  const s = diff.settings;
+  const settingIds = s.ids.reduce((n, g) => n + g.added.length + g.removed.length, 0);
+  const summary = [
+    diff.added.length && green(`+${diff.added.length} mới`),
+    diff.changed.length && yellow(`~${diff.changed.length} sửa`),
+    diff.renamed.length && cyan(`→${diff.renamed.length} đổi tên`),
+    diff.removed.length && red(`−${diff.removed.length} xoá`),
+    (s.addedGroups.length || s.removedGroups.length || settingIds) && `settings ±${s.addedGroups.length + s.removedGroups.length} nhóm / ±${settingIds} id`,
+    diff.protected.length && red(`⚠${diff.protected.length} file core`),
+  ].filter(Boolean);
+  console.log(`  ${bold("Thay đổi")} ${dim(`so với ${since}`)}: ${summary.join(dim(" · "))}`);
+
+  const list = (rows, mark, color, fmt) => {
+    rows.slice(0, LIST_LIMIT).forEach((r) => console.log(`    ${color(mark)} ${fmt(r)}`));
+    if (rows.length > LIST_LIMIT) console.log(dim(`    … +${rows.length - LIST_LIMIT} mục khác (xem trong trang)`));
+  };
+  const label = (r) => `${r.name} ${dim(`(${r.kind})`)}`;
+  list(diff.added, "+", green, label);
+  list(diff.changed, "~", yellow, (r) => `${label(r)} ${dim(r.reasons.join(", "))}`);
+  list(diff.renamed, "→", cyan, (r) => `${r.from.name} → ${label(r.to)}`);
+  list(diff.removed, "−", red, label);
+  s.addedGroups.forEach((g) => console.log(`    ${green("+")} settings: ${g}`));
+  s.removedGroups.forEach((g) => console.log(`    ${red("−")} settings: ${g}`));
+  s.ids.forEach((g) =>
+    console.log(`    ${yellow("~")} settings: ${g.group} ${dim([...g.added.map((x) => `+${x}`), ...g.removed.map((x) => `−${x}`)].join(" "))}`)
+  );
+  if (diff.protected.length) {
+    // Expected right after core:sync; anything else means a child edited core.
+    console.log(yellow(`  ⚠ ${diff.protected.length} file core thay đổi — nếu không phải do core:sync thì đây là vi phạm`));
+    const mark = { added: green("+"), changed: yellow("~"), removed: red("−") };
+    list(diff.protected, "", (x) => x, (r) => `${mark[r.type]} ${r.file}${r.level === "locked" ? red(" [locked]") : ""}`);
+  }
+}
+
+try {
+  main();
+} catch (err) {
+  console.error(red(`✗ ${err.message}`));
+  process.exit(1);
+}

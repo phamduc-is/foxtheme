@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme Catalog</title>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --border: #e3e6eb;
+  --text: #1b1f24; --muted: #5d6673; --faint: #8b94a1; --accent: #4f46e5; --accent-soft: #eef0ff;
+  --k-section: #2563eb; --k-block: #059669; --k-private: #7c3aed; --k-snippet: #d97706; --k-js: #ca8a04; --k-scss: #db2777;
+  --d-added: #15803d; --d-changed: #b45309; --d-renamed: #0e7490; --d-removed: #b91c1c;
+  --p-locked: #b91c1c; --p-core: #475569;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+  --radius: 12px; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --surface: #171a21; --surface-2: #1f232c; --border: #2a2f3a;
+    --text: #e7eaf0; --muted: #a0a8b6; --faint: #6f7886; --accent: #8b87ff; --accent-soft: #23234a;
+    --k-section: #60a5fa; --k-block: #34d399; --k-private: #a78bfa; --k-snippet: #fbbf24; --k-js: #facc15; --k-scss: #f472b6;
+    --d-added: #4ade80; --d-changed: #fbbf24; --d-renamed: #22d3ee; --d-removed: #f87171;
+    --p-locked: #f87171; --p-core: #94a3b8;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115; --surface: #171a21; --surface-2: #1f232c; --border: #2a2f3a;
+  --text: #e7eaf0; --muted: #a0a8b6; --faint: #6f7886; --accent: #8b87ff; --accent-soft: #23234a;
+  --k-section: #60a5fa; --k-block: #34d399; --k-private: #a78bfa; --k-snippet: #fbbf24; --k-js: #facc15; --k-scss: #f472b6;
+  --d-added: #4ade80; --d-changed: #fbbf24; --d-renamed: #22d3ee; --d-removed: #f87171;
+  --p-locked: #f87171; --p-core: #94a3b8;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 140px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.topbar__inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px; display: grid; gap: 12px; }
+.topbar__row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand h1 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
+.brand span { color: var(--faint); font-size: 12px; }
+.search { position: relative; flex: 1 1 380px; min-width: 0; max-width: 560px; }
+.search input { width: 100%; height: 40px; padding: 0 44px 0 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search svg { position: absolute; left: 12px; top: 12px; color: var(--faint); }
+.search kbd { position: absolute; right: 10px; top: 9px; font: 11px var(--mono); color: var(--faint); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; background: var(--surface-2); }
+.icon-btn { height: 40px; width: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); display: grid; place-items: center; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--muted); transition: all .15s; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.chip b { font-weight: 600; color: var(--text); }
+.chip[aria-pressed="true"] { border-color: var(--c, var(--accent)); color: var(--text); background: color-mix(in srgb, var(--c, var(--accent)) 12%, var(--surface)); }
+.result-count { margin-left: auto; color: var(--faint); font-size: 13px; }
+
+.layout { max-width: 1440px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; }
+.sidebar { position: sticky; top: 132px; align-self: start; max-height: calc(100vh - 150px); overflow: auto; padding-right: 4px; }
+.sidebar h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin: 0 0 8px 10px; }
+.nav a { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; text-decoration: none; color: var(--muted); font-size: 13.5px; }
+.nav a:hover { background: var(--surface-2); color: var(--text); }
+.nav a.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav a span { color: var(--faint); font-variant-numeric: tabular-nums; }
+.nav a.is-empty { opacity: .35; }
+
+.steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 28px; }
+.steps[hidden] { display: none; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+.step b { display: block; font-size: 11px; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px; }
+.step p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.cat { margin-bottom: 36px; }
+.cat__head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+.cat__head h2 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+.cat__head span { color: var(--faint); font-size: 13px; }
+.cat__need { color: var(--muted); margin: 0 0 14px; font-size: 13.5px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+
+main { min-width: 0; }
+.card { --c: var(--accent); min-width: 0; position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; transition: border-color .15s, transform .15s; }
+.card::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--c); }
+.card:hover { border-color: color-mix(in srgb, var(--c) 45%, var(--border)); }
+.card__top { display: flex; align-items: center; gap: 8px; }
+.badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); white-space: nowrap; }
+.card__name { font-family: var(--mono); font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.copy { margin-left: auto; border: 0; background: transparent; color: var(--faint); padding: 4px; border-radius: 6px; display: grid; place-items: center; }
+.copy:hover { background: var(--surface-2); color: var(--text); }
+.card__desc { margin: 0; color: var(--muted); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.card.is-open .card__desc { -webkit-line-clamp: unset; }
+.card__desc.is-empty { color: var(--faint); font-style: italic; cursor: default; }
+.card__when { display: none; margin: 0; font-size: 12.5px; color: var(--muted); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.card.is-open .card__when { display: block; }
+.card__note { font-size: 12px; color: var(--faint); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font: 11.5px var(--mono); padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.tag--more { background: transparent; border-style: dashed; cursor: pointer; }
+.card__file { margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--border); font: 11.5px var(--mono); color: var(--faint); text-decoration: none; display: flex; align-items: center; gap: 6px; overflow: hidden; }
+.card__file:hover { color: var(--accent); }
+.card__file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+mark { background: color-mix(in srgb, var(--k-snippet) 30%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+.chip--change { --c: var(--d-changed); }
+.chip--change[hidden] { display: none; }
+.dbadge { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; color: var(--d); border: 1px solid color-mix(in srgb, var(--d) 45%, transparent); white-space: nowrap; }
+.card[data-change] { border-color: color-mix(in srgb, var(--d) 40%, var(--border)); }
+.card__change { font-size: 12px; color: var(--d); }
+
+.changes { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; }
+.changes > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.changes > summary::-webkit-details-marker { display: none; }
+.changes > summary::after { content: "▾"; margin-left: auto; color: var(--faint); transition: transform .15s; }
+.changes[open] > summary::after { transform: rotate(180deg); }
+.changes h2 { font-size: 15px; margin: 0; }
+.changes__since { color: var(--faint); font-size: 12.5px; }
+.changes__sum { display: flex; gap: 6px; flex-wrap: wrap; }
+.changes__sum span { font-size: 12px; font-weight: 600; color: var(--d); background: color-mix(in srgb, var(--d) 12%, transparent); padding: 2px 8px; border-radius: 999px; }
+.changes__body { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 4px 16px 16px; border-top: 1px solid var(--border); }
+.changes__col h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--d); margin: 12px 0 6px; }
+.changes__col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 320px; overflow: auto; }
+.changes__col li { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.changes__col li code { color: var(--text); }
+.changes__col li small { color: var(--faint); }
+.jump { border: 0; background: none; padding: 0; text-decoration: underline dotted; text-underline-offset: 3px; }
+.jump:hover { color: var(--accent); }
+.changes--none { padding: 10px 16px; color: var(--faint); font-size: 13px; }
+
+.chip--core { --c: var(--p-locked); }
+.pbadge { font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 6px; color: var(--p); background: color-mix(in srgb, var(--p) 12%, transparent); white-space: nowrap; }
+.core-groups { display: grid; gap: 12px; }
+.core-group { --p: var(--p-core); background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--p); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; display: grid; gap: 8px; }
+.core-group[data-level="locked"] { --p: var(--p-locked); }
+.core-group__head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.core-group__head h3 { margin: 0; font-size: 14.5px; }
+.core-group__head span { color: var(--faint); font-size: 12.5px; }
+.core-group p { margin: 0; font-size: 13px; color: var(--muted); }
+.core-group p b { color: var(--text); font-weight: 600; }
+.core-files { display: flex; flex-wrap: wrap; gap: 4px; }
+.core-files a { text-decoration: none; }
+.core-files a:hover { border-color: var(--accent); color: var(--accent); }
+.core-files .tag[data-change] { color: var(--d); border-color: color-mix(in srgb, var(--d) 50%, var(--border)); }
+.core-group details > summary { cursor: pointer; font-size: 12.5px; color: var(--faint); margin-bottom: 6px; }
+.core-policy { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.core-policy div { --p: var(--p-core); font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.core-policy div:first-child { --p: var(--p-locked); }
+.core-policy b { color: var(--p); }
+
+.settings { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+.empty { text-align: center; padding: 80px 20px; color: var(--faint); }
+.empty b { display: block; font-size: 16px; color: var(--muted); margin-bottom: 4px; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); opacity: 0; background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; transition: all .2s; pointer-events: none; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .brand { flex-basis: 100%; flex-wrap: wrap; row-gap: 0; }
+  .search { flex-basis: 0; }
+  .result-count { margin-left: 0; flex-basis: 100%; }
+  html { scroll-padding-top: 190px; }
+  .sidebar { display: none; }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .step { padding: 8px 12px; }
+  .topbar__inner { padding: 12px 16px; }
+  .grid, .settings { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar__inner">
+    <div class="topbar__row">
+      <div class="brand"><h1>Theme Catalog</h1><span id="meta"></span></div>
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Tìm: carousel, accordion, price, cart drawer…" autocomplete="off" aria-label="Tìm kiếm">
+        <kbd>/</kbd>
+      </label>
+      <button class="icon-btn" id="theme" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+    <div class="topbar__row">
+      <div class="chips" id="kinds"></div>
+      <span class="result-count" id="count"></span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Danh mục</h2>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main>
+    <div id="changes"></div>
+    <section class="steps" aria-label="Thứ tự ưu tiên khi làm theme mới">
+      <div class="step"><b>1 · Cấu hình</b><p>Preset, template JSON, global settings</p></div>
+      <div class="step"><b>2 · Restyle</b><p>Sửa SCSS của component có sẵn</p></div>
+      <div class="step"><b>3 · Sửa markup</b><p>Giữ nguyên <code>ref</code> / <code>data-*</code></p></div>
+      <div class="step"><b>4 · Tạo mới</b><p>File mới, prefix riêng của store</p></div>
+      <div class="step"><b>5 · Extend JS</b><p><code>src/js/custom/</code>, không sửa core</p></div>
+    </section>
+    <div id="content"></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DATA = __DATA__;
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const state = { q: "", kinds: new Set(), changed: false, core: false };
+const LEVEL = { locked: "🔒 Locked", core: "Sync từ core" };
+const CORE_FILE_LIMIT = 40;
+const CHANGE = {
+  added: { label: "Mới", d: "var(--d-added)" },
+  changed: { label: "Sửa", d: "var(--d-changed)" },
+  renamed: { label: "Đổi tên", d: "var(--d-renamed)" },
+  removed: { label: "Xoá", d: "var(--d-removed)" },
+};
+const TAG_LIMIT = 5;
+
+// Theme toggle (remembered per browser; storage may be unavailable).
+const root = document.documentElement;
+try { const t = localStorage.getItem("catalog-theme"); if (t) root.dataset.theme = t; } catch {}
+$("#theme").onclick = () => {
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("catalog-theme", root.dataset.theme); } catch {}
+};
+
+const total = DATA.cats.reduce((n, c) => n + c.items.length, 0);
+$("#meta").textContent = total + " mục · cập nhật " + DATA.generated + (DATA.git && DATA.git.sha ? " · " + (DATA.git.branch || "detached") + "@" + DATA.git.sha : "");
+
+// Kind filter chips
+const kindCount = (id) => DATA.cats.reduce((n, c) => n + c.items.filter((i) => i.kind === id).length, 0);
+$("#kinds").innerHTML = DATA.kinds.map((k) =>
+  '<button class="chip" style="--c: var(--k-' + k.id + ')" data-kind="' + k.id + '" aria-pressed="false"><i class="dot"></i>' + k.label + ' <b>' + kindCount(k.id) + '</b></button>'
+).join("");
+const changedCount = DATA.cats.reduce((n, c) => n + c.items.filter((i) => i.change).length, 0);
+if (changedCount) {
+  $("#kinds").insertAdjacentHTML("beforeend",
+    '<button class="chip chip--change" data-changed aria-pressed="false" title="Chỉ hiện mục mới / sửa / đổi tên so với lần chạy trước"><i class="dot"></i>Thay đổi <b>' + changedCount + "</b></button>");
+}
+const coreItemCount = DATA.cats.reduce((n, c) => n + c.items.filter((i) => i.protect).length, 0);
+if (coreItemCount) {
+  $("#kinds").insertAdjacentHTML("beforeend",
+    '<button class="chip chip--core" data-core aria-pressed="false" title="Chỉ hiện module core — child không được sửa"><i class="dot"></i>🔒 Core <b>' + coreItemCount + "</b></button>");
+}
+$("#kinds").onclick = (e) => {
+  const core = e.target.closest("[data-core]");
+  if (core) {
+    state.core = !state.core;
+    core.setAttribute("aria-pressed", state.core);
+    render();
+    return;
+  }
+  const ch = e.target.closest("[data-changed]");
+  if (ch) {
+    state.changed = !state.changed;
+    ch.setAttribute("aria-pressed", state.changed);
+    render();
+    return;
+  }
+  const btn = e.target.closest("[data-kind]");
+  if (!btn) return;
+  const k = btn.dataset.kind;
+  state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k);
+  btn.setAttribute("aria-pressed", state.kinds.has(k));
+  render();
+};
+
+function matches(item, terms) {
+  if (state.kinds.size && !state.kinds.has(item.kind)) return false;
+  if (state.changed && !item.change) return false;
+  if (state.core && !item.protect) return false;
+  if (!terms.length) return true;
+  const hay = (item.name + " " + item.desc + " " + (item.keywords || "") + " " + (item.note || "") + " " + item.file).toLowerCase();
+  return terms.every((t) => hay.includes(t));
+}
+
+function hl(text, terms) {
+  let out = esc(text);
+  for (const t of terms) {
+    if (t.length < 2) continue;
+    out = out.replace(new RegExp("(" + t.replace(/[.*+?^$\{}()|[\]\\]/g, "\\$&") + ")(?![^<]*>)", "gi"), "<mark>$1</mark>");
+  }
+  return out;
+}
+
+function card(item, terms) {
+  const kind = DATA.kinds.find((k) => k.id === item.kind);
+  const tags = item.usage.slice(0, TAG_LIMIT).map((u) => '<span class="tag">' + esc(u) + "</span>").join("");
+  const more = item.usage.length > TAG_LIMIT
+    ? '<button class="tag tag--more" data-more>+' + (item.usage.length - TAG_LIMIT) + "</button>" : "";
+  const href = "vscode://file/" + encodeURI(DATA.root + "/" + item.file);
+  const ch = item.change && CHANGE[item.change.type];
+  const chText = !item.change ? "" : item.change.type === "renamed" ? "Trước đây: " + item.change.from
+    : item.change.type === "changed" ? "Đã đổi: " + item.change.reasons.join(", ") : "";
+  return '<article class="card" style="--c: var(--k-' + item.kind + ')' + (ch ? "; --d: " + ch.d : "") + '"' + (ch ? ' data-change="' + item.change.type + '"' : "") + ' data-usage="' + esc(JSON.stringify(item.usage)) + '">' +
+    '<div class="card__top"><span class="badge">' + kind.label + '</span><span class="card__name">' + hl(item.name, terms) + "</span>" +
+    (ch ? '<span class="dbadge" title="So với lần chạy trước">' + ch.label + "</span>" : "") +
+    (item.protect ? '<span class="pbadge" style="--p: var(--p-' + item.protect.level + ')" title="Core từ theme base: ' + esc(item.protect.group) + ' — child không được sửa">' + (item.protect.level === "locked" ? "🔒" : "Core") + "</span>" : "") +
+    '<button class="copy" title="Copy: ' + esc(item.copy) + '" data-copy="' + esc(item.copy) + '" aria-label="Copy">' +
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div>' +
+    (item.desc ? '<p class="card__desc" title="Bấm để mở rộng">' + hl(item.desc, terms) + "</p>" : '<p class="card__desc is-empty">Chưa có mô tả</p>') +
+    (item.when ? '<p class="card__when"><b>Khi nào dùng:</b> ' + esc(item.when) + "</p>" : "") +
+    (chText ? '<div class="card__change">' + esc(chText) + "</div>" : "") +
+    (item.note ? '<div class="card__note">' + hl(item.note, terms) + "</div>" : "") +
+    (tags ? '<div class="tags" title="Dùng ở">' + tags + more + "</div>" : "") +
+    '<a class="card__file" href="' + href + '" title="Mở trong VS Code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7"/></svg><span>' + esc(item.file) + "</span></a>" +
+    "</article>";
+}
+
+function render() {
+  const terms = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let shown = 0;
+  const nav = [];
+  // While searching, categories with the most hits come first.
+  const cats = DATA.cats.map((c) => ({ ...c, hits: c.items.filter((i) => matches(i, terms)) }));
+  const ordered = terms.length ? [...cats].sort((a, b) => b.hits.length - a.hits.length) : cats;
+  const html = ordered.map((c) => {
+    const items = c.hits;
+    shown += items.length;
+    nav.push('<a href="#' + c.id + '" data-nav="' + c.id + '" class="' + (items.length ? "" : "is-empty") + '">' + esc(c.title) + "<span>" + items.length + "</span></a>");
+    if (!items.length) return "";
+    return '<section class="cat" id="' + c.id + '"><div class="cat__head"><h2>' + esc(c.title) + "</h2><span>" + items.length + " mục</span></div>" +
+      '<p class="cat__need">Khi cần: ' + esc(c.need) + '</p><div class="grid">' + items.map((i) => card(i, terms)).join("") + "</div></section>";
+  }).join("");
+
+  // Protected core files: every file on disk (incl. scripts/, .claude/), not only catalog items.
+  const coreChange = {};
+  (DATA.diff?.protected || []).forEach((c) => (coreChange[c.file] = c.type));
+  const coreGroups = (DATA.protected || []).map((g) => ({
+    ...g,
+    hits: g.files.filter((f) => (!state.changed || coreChange[f.file]) &&
+      (!terms.length || terms.every((t) => (f.file + " " + g.title).toLowerCase().includes(t)))),
+  })).filter((g) => g.hits.length);
+  const coreTotal = coreGroups.reduce((n, g) => n + g.hits.length, 0);
+  const showCore = !state.kinds.size && coreTotal > 0;
+  const fileTag = (f) => {
+    const c = coreChange[f.file];
+    return '<a class="tag" href="vscode://file/' + encodeURI(DATA.root + "/" + f.file) + '" title="Mở trong VS Code"' +
+      (c ? ' data-change style="--d: ' + CHANGE[c].d + '"' : "") + ">" + hl(f.file, terms) + (c ? " · " + CHANGE[c].label : "") + "</a>";
+  };
+  const coreHtml = showCore
+    ? '<section class="cat" id="core"><div class="cat__head"><h2>Không được sửa · core từ theme base</h2><span>' + coreTotal + ' file</span></div>' +
+      '<p class="cat__need">Các file này sync từ <code>foxtheme-base</code> xuống fork. Child sửa ở đây thì mỗi lần <code>yarn core:sync</code> sẽ conflict hoặc mất fix của core. Nguồn: FORK-WORKFLOW.md §5, §10.</p>' +
+      '<div class="core-policy"><div><b>🔒 Locked</b>: tuyệt đối không sửa ở child. Bug nằm ở core thì dùng <code>/fix-core</code>.</div><div><b>Sync từ core</b>: không nên sửa. Muốn thay đổi thì extend ở <code>src/js/custom/</code>, sửa design layer SCSS, hoặc đề xuất lên core.</div></div>' +
+      '<div class="core-groups">' + coreGroups.map((g) => {
+        const files = g.hits.map(fileTag);
+        const list = files.length > CORE_FILE_LIMIT && !terms.length
+          ? "<details><summary>Hiện " + files.length + ' file</summary><div class="core-files">' + files.join("") + "</div></details>"
+          : '<div class="core-files">' + files.join("") + "</div>";
+        return '<article class="core-group" data-level="' + g.level + '"><div class="core-group__head"><span class="pbadge">' + LEVEL[g.level] + "</span><h3>" + esc(g.title) + "</h3><span>" + g.hits.length + " file</span></div>" +
+          "<p>" + esc(g.why) + "</p><p><b>Thay vào đó:</b> " + esc(g.instead) + "</p>" + list + "</article>";
+      }).join("") + "</div></section>"
+    : "";
+  nav.push('<a href="#core" data-nav="core" class="' + (showCore ? "" : "is-empty") + '">🔒 Không được sửa<span>' + (showCore ? coreTotal : 0) + "</span></a>");
+
+  const settings = DATA.settings.filter((g) => !terms.length || terms.every((t) => (g.name + " " + g.ids.join(" ")).toLowerCase().includes(t)));
+  const showSettings = !state.kinds.size && !state.changed && !state.core && settings.length;
+  nav.push('<a href="#settings" data-nav="settings" class="' + (showSettings ? "" : "is-empty") + '">Global settings<span>' + (showSettings ? settings.length : 0) + "</span></a>");
+  const settingsHtml = showSettings
+    ? '<section class="cat" id="settings"><div class="cat__head"><h2>Global settings</h2><span>' + settings.length + ' nhóm</span></div><p class="cat__need">Khi cần: cấu hình toàn theme trong Theme settings (<code>settings.xxx</code>) · <code>config/settings_schema.json</code></p><div class="settings">' +
+      settings.map((g) => '<article class="card" style="--c: var(--accent)"><div class="card__top"><span class="badge">' + g.ids.length + ' setting</span><span class="card__name">' + hl(g.name, terms) + '</span></div><div class="tags">' + g.ids.map((id) => '<span class="tag">' + hl(id, terms) + "</span>").join("") + "</div></article>").join("") +
+      "</div></section>"
+    : "";
+
+  $("#content").innerHTML = html + coreHtml + settingsHtml || '<div class="empty"><b>Không tìm thấy</b>Thử từ khoá khác hoặc bỏ bớt bộ lọc.</div>';
+  $("#nav").innerHTML = nav.join("");
+  $(".steps").hidden = terms.length > 0 || state.kinds.size > 0 || state.changed || state.core;
+  $("#count").textContent = (terms.length || state.kinds.size || state.changed || state.core) ? shown + " / " + total + " mục" : "";
+  observe();
+}
+
+// "What changed since the last run" panel — built once, collapsible.
+function renderChanges() {
+  const d = DATA.diff;
+  if (!d) return;
+  const since = [d.prev.generated, d.prev.git && d.prev.git.sha ? (d.prev.git.branch || "detached") + "@" + d.prev.git.sha : ""].filter(Boolean).join(" · ");
+  if (!d.total) {
+    $("#changes").innerHTML = '<div class="changes changes--none">Không có thay đổi so với lần chạy trước (' + esc(since) + ")</div>";
+    return;
+  }
+  const kindLabel = (k) => (DATA.kinds.find((x) => x.id === k) || { label: k }).label;
+  const jump = (name) => '<button class="jump" data-jump="' + esc(name) + '" title="Lọc tới mục này"><code>' + esc(name) + "</code></button>";
+  const row = (r, extra) => "<li>" + extra + " <small>" + esc(kindLabel(r.kind)) + "</small></li>";
+  const col = (type, rows, fmt) => rows.length
+    ? '<div class="changes__col" style="--d: ' + CHANGE[type].d + '"><h3>' + CHANGE[type].label + " · " + rows.length + "</h3><ul>" + rows.map(fmt).join("") + "</ul></div>" : "";
+  const s = d.settings;
+  const settingRows = [
+    ...s.addedGroups.map((g) => "<li>+ nhóm <code>" + esc(g) + "</code></li>"),
+    ...s.removedGroups.map((g) => "<li>− nhóm <code>" + esc(g) + "</code></li>"),
+    ...s.ids.map((g) => "<li><code>" + esc(g.group) + "</code> <small>" + esc([...g.added.map((x) => "+" + x), ...g.removed.map((x) => "−" + x)].join(" ")) + "</small></li>"),
+  ];
+  const sum = [["added", d.added.length], ["changed", d.changed.length], ["renamed", d.renamed.length], ["removed", d.removed.length]]
+    .filter(([, n]) => n).map(([t, n]) => '<span style="--d: ' + CHANGE[t].d + '">' + CHANGE[t].label + " " + n + "</span>").join("") +
+    (settingRows.length ? '<span style="--d: var(--accent)">Settings ' + settingRows.length + "</span>" : "") +
+    ((d.protected || []).length ? '<span style="--d: var(--p-locked)">Core ' + d.protected.length + "</span>" : "");
+  $("#changes").innerHTML = '<details class="changes" open><summary><h2>Thay đổi so với lần chạy trước</h2><span class="changes__since">' + esc(since) + '</span><div class="changes__sum">' + sum + "</div></summary>" +
+    '<div class="changes__body">' +
+    col("added", d.added, (r) => row(r, jump(r.name))) +
+    col("changed", d.changed, (r) => row(r, jump(r.name) + " <small>" + esc(r.reasons.join(", ")) + "</small>")) +
+    col("renamed", d.renamed, (r) => row(r.to, "<code>" + esc(r.from.name) + "</code> → " + jump(r.to.name))) +
+    col("removed", d.removed, (r) => row(r, "<code>" + esc(r.name) + "</code> <small>" + esc(r.file) + "</small>")) +
+    (settingRows.length ? '<div class="changes__col" style="--d: var(--accent)"><h3>Global settings · ' + settingRows.length + "</h3><ul>" + settingRows.join("") + "</ul></div>" : "") +
+    ((d.protected || []).length ? '<div class="changes__col" style="--d: var(--p-locked)"><h3>⚠ File core thay đổi · ' + d.protected.length + "</h3><ul>" +
+      d.protected.map((c) => "<li>" + ({ added: "+", changed: "~", removed: "−" })[c.type] + " <code>" + esc(c.file) + "</code>" + (c.level === "locked" ? " <small>🔒 locked</small>" : "") + "</li>").join("") +
+      "</ul><p class=\"changes__since\">Nếu không phải do <code>core:sync</code> thì child đang sửa core.</p></div>" : "") +
+    "</div></details>";
+}
+$("#changes").onclick = (e) => {
+  const j = e.target.closest("[data-jump]");
+  if (!j) return;
+  q.value = j.dataset.jump;
+  state.q = q.value;
+  render();
+  $("#content").scrollIntoView({ behavior: "smooth" });
+};
+
+// Card interactions: copy, expand, show all usages
+$("#content").onclick = async (e) => {
+  const copy = e.target.closest("[data-copy]");
+  if (copy) {
+    try { await navigator.clipboard.writeText(copy.dataset.copy); toast("Đã copy: " + copy.dataset.copy); }
+    catch { toast("Không copy được — trình duyệt chặn clipboard"); }
+    return;
+  }
+  const more = e.target.closest("[data-more]");
+  if (more) {
+    const usage = JSON.parse(more.closest(".card").dataset.usage);
+    more.parentElement.innerHTML = usage.map((u) => '<span class="tag">' + esc(u) + "</span>").join("");
+    return;
+  }
+  if (e.target.closest(".card__desc:not(.is-empty)")) e.target.closest(".card").classList.toggle("is-open");
+};
+
+let toastTimer;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("is-on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("is-on"), 1600);
+}
+
+// Highlight the category currently in view
+let io;
+function observe() {
+  io?.disconnect();
+  io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("is-active", a.dataset.nav === en.target.id));
+    }
+  }, { rootMargin: "-140px 0px -70% 0px" });
+  document.querySelectorAll(".cat").forEach((s) => io.observe(s));
+}
+
+// Search: debounce + keyboard shortcuts ("/" focus, Esc clear)
+const q = $("#q");
+let timer;
+q.oninput = () => { clearTimeout(timer); timer = setTimeout(() => { state.q = q.value.trim(); render(); }, 120); };
+addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); q.select(); }
+  if (e.key === "Escape" && document.activeElement === q) { q.value = ""; state.q = ""; render(); }
+});
+
+renderChanges();
+render();
+</script>
+</body>
+</html>

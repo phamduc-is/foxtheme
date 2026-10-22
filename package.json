@@ -1,0 +1,14 @@
+{
+  "name": "module-catalog",
+  "version": "1.2.0",
+  "description": "Scan a Shopify OS 2.0 theme and build a searchable CATALOG.html of its sections, blocks, snippets, JS, SCSS and settings.",
+  "private": true,
+  "bin": {
+    "module-catalog": "bin/module-catalog"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Dawn",
+  "license": "UNLICENSED"
+}
